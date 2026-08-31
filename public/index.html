@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Quản lý khách hàng</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container py-5">
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <h1 class="h3 mb-4">Quản lý khách hàng</h1>
+            <form id="customerForm" class="row g-3 mb-4">
+
+                <div class="col-md-2">
+                    <label for="customerId" class="form-label">ID</label>
+                    <input
+                            type="number"
+                            class="form-control"
+                            id="customerId"
+                            required>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="customerName" class="form-label">
+                        Tên khách hàng
+                    </label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="customerName"
+                            required>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="phone" class="form-label">
+                        Số điện thoại
+                    </label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="phone">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="address" class="form-label">
+                        Địa chỉ
+                    </label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="address">
+                </div>
+
+                <div class="col-12">
+                    <button
+                            type="submit"
+                            class="btn btn-primary"
+                            id="submitButton">
+                        Thêm khách hàng
+                    </button>
+
+                    <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="cancelEditButton"
+                            style="display: none;">
+                        Hủy sửa
+                    </button>
+                </div>
+
+            </form>
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Tên khách hàng</th>
+                    <th>Số điện thoại</th>
+                    <th>Địa chỉ</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+
+                <tbody id="customerTableBody">
+                <!-- jQuery sẽ đưa dữ liệu vào đây -->
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- jQuery, phải dùng bản đầy đủ vì bản slim không có AJAX -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    let editingCustomerId = null;
+
+    $(document).ready(function () {
+
+        loadCustomers();
+
+        $("#customerForm").submit(function (event) {
+
+            event.preventDefault();
+
+            if (editingCustomerId === null) {
+                createCustomer();
+            } else {
+                updateCustomer();
+            }
+        });
+
+        $("#cancelEditButton").click(function () {
+            resetForm();
+        });
+    });
+
+    function loadCustomers() {
+
+        $.ajax({
+            url: "/customers",
+            method: "GET",
+
+            success: function (customers) {
+
+                const tableBody = $("#customerTableBody");
+
+                tableBody.empty();
+
+                customers.forEach(function (customer) {
+
+                    const row = `
+                        <tr>
+                            <td>${customer.customerId}</td>
+                            <td>${customer.customerName}</td>
+                            <td>${customer.phone ?? ""}</td>
+                            <td>${customer.address ?? ""}</td>
+
+                  <td>
+    <button
+        class="btn btn-warning btn-sm"
+        onclick="editCustomer(${customer.customerId})">
+        Sửa
+    </button>
+
+    <button
+        class="btn btn-danger btn-sm ms-1"
+        onclick="deleteCustomer(${customer.customerId})">
+        Xóa
+    </button>
+</td>
+                        </tr>
+                    `;
+
+                    tableBody.append(row);
+                });
+            },
+
+            error: function (xhr) {
+                console.error(xhr);
+                alert("Không thể tải danh sách khách hàng");
+            }
+        });
+    }
+
+    function createCustomer() {
+
+        const customer = {
+            customerId: Number($("#customerId").val()),
+            customerName: $("#customerName").val(),
+            phone: $("#phone").val(),
+            address: $("#address").val()
+        };
+
+        $.ajax({
+            url: "/customers",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(customer),
+
+            success: function (savedCustomer) {
+
+                alert(
+                    "Đã thêm khách hàng: "
+                    + savedCustomer.customerName
+                );
+
+                resetForm();
+                loadCustomers();
+            },
+
+            error: function (xhr) {
+
+                console.error(xhr);
+
+                alert(
+                    "Thêm khách hàng thất bại. "
+                    + "Hãy kiểm tra ID có bị trùng không."
+                );
+            }
+        });
+    }
+
+    function editCustomer(id) {
+
+        $.ajax({
+            url: "/customers/" + id,
+            method: "GET",
+
+            success: function (customer) {
+
+                editingCustomerId = customer.customerId;
+
+                $("#customerId").val(customer.customerId);
+                $("#customerName").val(customer.customerName);
+                $("#phone").val(customer.phone);
+                $("#address").val(customer.address);
+
+                $("#customerId").prop("disabled", true);
+
+                $("#submitButton").text("Cập nhật khách hàng");
+
+                $("#cancelEditButton").show();
+            },
+
+            error: function (xhr) {
+
+                console.error(xhr);
+
+                alert("Không thể lấy thông tin khách hàng");
+            }
+        });
+    }
+
+    function updateCustomer() {
+
+        const customer = {
+            customerName: $("#customerName").val(),
+            phone: $("#phone").val(),
+            address: $("#address").val()
+        };
+
+        $.ajax({
+            url: "/customers/" + editingCustomerId,
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(customer),
+
+            success: function (updatedCustomer) {
+
+                alert(
+                    "Đã cập nhật khách hàng: "
+                    + updatedCustomer.customerName
+                );
+
+                resetForm();
+                loadCustomers();
+            },
+
+            error: function (xhr) {
+
+                console.error(xhr);
+
+                alert("Cập nhật khách hàng thất bại");
+            }
+        });
+    }
+    function deleteCustomer(id) {
+
+        const confirmed = confirm(
+            "Bạn có chắc muốn xóa khách hàng ID = " + id + " không?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        $.ajax({
+            url: "/customers/" + id,
+            method: "DELETE",
+
+         success: function (message) {
+
+    alert(message);
+
+    if (editingCustomerId === id) {
+        resetForm();
+    }
+
+    loadCustomers();
+},
+
+            error: function (xhr) {
+
+                console.error(xhr);
+
+                alert("Xóa khách hàng thất bại");
+            }
+        });
+    }
+    function resetForm() {
+
+        $("#customerForm")[0].reset();
+
+        editingCustomerId = null;
+
+        $("#customerId").prop("disabled", false);
+
+        $("#submitButton").text("Thêm khách hàng");
+
+        $("#cancelEditButton").hide();
+    }
+</script>
+
+</body>
+</html>
