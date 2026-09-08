@@ -1,4 +1,5 @@
 const {loadEnvFile} = require("node:process");
+const errorHandler = require("./middlewares/errorHandler");
 // Phải đọc .env trước
 loadEnvFile(".env");
 
@@ -16,12 +17,13 @@ const {
 const customerRoutes = require("./routes/customerRoutes")
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000 ;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 app.use("/customers",customerRoutes);
+app.use(errorHandler);
 
 
 

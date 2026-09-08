@@ -1,59 +1,87 @@
 
 const {sql} = require("../config/database")
 
-async function getAllCustomers(req,res) {
+const customerService = require("../services/customerService")
+
+async function getAllCustomers(req,res,next) {
     try {
-        const result = await sql.query`
-    Select 
-    CustomerID as customerId,
-    CustomerName as customerName,
-    Phone as phone,
-    Address as address
-    from Customer
-    `;
-    res.json(result.recordset);
+        const customers = await customerService.getAllCustomers();
+        res.json(customers);
     } catch (error) {
-        console.error("lay danh sach khong thanh cong",error);
+        next(error);
 
     }
 }
 
 
-async function getCustomerById(req,res) {
+async function getCustomerById(req,res,next) {
     try {
         const id = Number(req.params.id);
-        const result = await sql.query`
-    Select 
-    CustomerID as customerId,
-    CustomerName as customerName,
-    Phone as phone,
-    Address as address
-    from Customer
-    where CustomerID = ${id}
-    `;
+        if (Number.isNaN(id) || id <= 0) {
+    return res.status(400).json({
+        message: "Customer ID must be a positive number"
+    });
+}
+          const customers = await customerService.getCustomerById(id);
 
-    if(result.recordset.length ===0){
+    if(customer.length ===0){
         return res.status(404).json({
 
             message: "Khong tim thay khach hang",
         })
     }
-    res.json(result.recordset[0]);
-    } catch (error) {
-        console.error("lay khach hang khong thanh cong",error);
+  
 
+
+    res.json(customers);
+    } catch (error) {
+       next(error);
     }
 }
 
 
  async function createCustomer(req,res) {
     try {
+        
         const customer = req.body;
+        if(!customer.customerId || !customer.customerName || customer.customerName.trim()==="" || !customer.phone || !customer.address){
+            return res.status(400).json({
+                message: "Please fill in all of the field!!!"
+            })
+        }
+        const id = Number(customer.customerId);
+        if(Number.isNaN(id) || id<= 0){
+            return res.status(400).json({
+                message: "Customer ID must be a positive number"
+            })
+        }
+        
+        const regex = /^\d+$/;
+
+        if (!regex.test(customer.phone)) {
+    return res.status(400).json({
+        message: "Phone must contain only numbers"
+    });
+}
+
+        const result = await sql.query`
+    SELECT CustomerID
+    FROM Customer
+    WHERE CustomerID = ${customer.customerId}
+`;
+
+if (result.recordset.length>0) {
+    return res.status(409).json({
+        message: "Customer ID already exists"
+    });
+}
+
         await sql.query`
         Insert Into Customer
         (CustomerID,
         CustomerName,
         Phone,
+
         Address
         )
         Values
@@ -63,14 +91,11 @@ async function getCustomerById(req,res) {
         ,${customer.address}
         )
         `;
-        res.json(customer); 
+        res.status(201).json(customer); 
 
 
     } catch (error) {
-        console.error("da xay ra loi:",error);
-        res.status(500).json({
-            message: "them khach hang that bai!"
-        })
+         next(error);
     }
 }
 
@@ -79,28 +104,39 @@ async function updateCustomer(req,res) {
     try {
         const id = Number(req.params.id);
         const customer = req.body;
-
-        await sql.query`
-        update
-        customer
+        if(!customer.customerId || !customer.customerName || customer.customerName.trim()==="" || !customer.phone || !customer.address){
+            return res.status(400).json({
+                message: "Please fill in all of the field!!!"
+            })
+        }
+         if(Number.isNaN(id) || id<= 0){
+            return res.status(400).json({
+                message: "Customer ID must be a positive number"
+            })
+        }
+        const result = await sql.query`
+        update customer
         set 
           CustomerName = ${customer.customerName},
                 Phone = ${customer.phone},
                 Address = ${customer.address}
             WHERE CustomerID = ${id}
         `;
-           res.json({
+
+     if (result.rowsAffected[0] === 0) {
+    return res.status(404).json({
+        message: "Customer not found"
+    });
+}
+        
+           res.status(200).json({
             customerId: id,
     customerName: customer.customerName,
     phone: customer.phone,
     address: customer.address
         });
     } catch (error) {
-         console.error("Cap nhat that bai:", error);
-
-        res.status(500).json({
-            message: "Cap nhat khach hang that bai!"
-        });
+       next(error);
     }
     
 }
@@ -108,23 +144,27 @@ async function updateCustomer(req,res) {
 async function deleteCustomer(req,res) {
     try {
         const id = Number(req.params.id);
-
-        await sql.query`
+    if (Number.isNaN(id) || id <= 0) {
+    return res.status(400).json({
+        message: "Customer ID must be a positive number"
+    });
+}
+        const result =await sql.query`
             DELETE FROM Customer
             WHERE CustomerID = ${id}
         `;
-
+        if (result.rowsAffected[0] === 0) {
+    return res.status(404).json({
+        message: "Customer not found"
+    });
+}
         res.json({
             message: "Xoa khach hang thanh cong",
             customerId: id
         });
 
     } catch(error) {
-        console.error("Xoa that bai:", error);
-
-        res.status(500).json({
-            message: "Xoa khach hang that bai!"
-        });
+        next(error);
     }
 };
 
