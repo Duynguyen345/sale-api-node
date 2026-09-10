@@ -15,6 +15,7 @@ const {
 } = require("./config/database")
 
 const customerRoutes = require("./routes/customerRoutes")
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000 ;
@@ -24,7 +25,7 @@ app.use(express.json());
 app.use(express.static("public"));
 app.use("/customers",customerRoutes);
 app.use(errorHandler);
-
+app.use("/orders", orderRoutes);
 
 
 
