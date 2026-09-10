@@ -38,8 +38,63 @@ async function getCustomerById(id) {
     return result.recordset;
 }
 
+async function createCustomer(customer) 
+{
+             const result = await sql.query`
+    SELECT CustomerID
+    FROM Customer
+    WHERE CustomerID = ${customer.customerId}
+`;
+
+    
+    return result.recordset;
+}
+
+async function insertCustomer(customer) {
+     const result = await sql.query`
+        Insert Into Customer
+        (CustomerID,
+        CustomerName,
+        Phone,
+
+        Address
+        )
+        Values
+        (${customer.customerId}
+        ,${customer.customerName}
+        ,${customer.phone}
+        ,${customer.address}
+        )
+        `;
+        return customer;
+}
+
+async function updateCustomer(id,customer) {
+     const result = await sql.query`
+        update customer
+        set 
+          CustomerName = ${customer.customerName},
+                Phone = ${customer.phone},
+                Address = ${customer.address}
+            WHERE CustomerID = ${id}
+        `;
+        return result.rowsAffected[0];
+
+}
+
+async function deleteCustomer(id) {
+      const result =await sql.query`
+            DELETE FROM Customer
+            WHERE CustomerID = ${id}
+        `;
+        return result.rowsAffected[0];
+}
 module.exports = {
     getCustomerById,
-    getAllCustomers
+    getAllCustomers,
+    createCustomer,
+    insertCustomer,
+    updateCustomer,
+    deleteCustomer
 }
   
