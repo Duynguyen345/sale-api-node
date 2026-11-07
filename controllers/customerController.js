@@ -97,7 +97,7 @@ async function updateCustomer(req,res,next) {
             })
         }
        
-        const newUpdate = customerService.updateCustomer(id,customer);
+        const newUpdate = await customerService.updateCustomer(id,customer);
      if (  newUpdate === 0) {
     return res.status(404).json({
         message: "Customer not found"
@@ -124,7 +124,7 @@ async function deleteCustomer(req,res,next) {
         message: "Customer ID must be a positive number"
     });
 }
-        const newDelete = customerService.deleteCustomer(id);
+        const newDelete = await customerService.deleteCustomer(id);
         if (newDelete === 0) {
     return res.status(404).json({
         message: "Customer not found"

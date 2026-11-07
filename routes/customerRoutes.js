@@ -1,30 +1,23 @@
-const  express = require("express");
+const express = require("express");
 
-const{
+const {
     getAllCustomers,
     getCustomerById,
     createCustomer,
     updateCustomer,
     deleteCustomer
 } = require("../controllers/customerController");
-
+const { verifyToken, requireAdmin } = require("../middlewares/authMiddleware.js");
 const router = express.Router();
 
-router.get("/",getAllCustomers);
+router.get("/", getAllCustomers);
 
-router.get("/:id",getCustomerById);
+router.get("/:id", getCustomerById);
 
-router.post("/",createCustomer);
+router.post("/", createCustomer);
 
-router.put("/:id",updateCustomer);
+router.put("/:id", updateCustomer);
 
-router.delete("/:id",deleteCustomer);
+router.delete("/:id", verifyToken, requireAdmin, deleteCustomer);
 
 module.exports = router;
-
-
-
-
-
-
-

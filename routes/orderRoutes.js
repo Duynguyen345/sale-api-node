@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-
+const { verifyToken } = require("../middlewares/authMiddleware.js");
 const orderController = require("../controllers/orderController");
-console.log(orderController);
-console.log(orderController.createOrder);
-router.post("/", orderController.createOrder);
 
+
+
+router.post("/", verifyToken, orderController.createOrder);
 module.exports = router;

@@ -23,7 +23,7 @@ await request1.query(`
  request2.input("orderDetailId", sql.Int, orderDetail.orderDetailId);
 request2.input("productName", sql.VarChar, orderDetail.productName);
 request2.input("quantity", sql.Int, orderDetail.quantity);
-request2.input("orderId", sql.Int, orderDetail.orderId);
+request2.input("orderId", sql.Int, order.orderId);
 await request2.query(`
     INSERT INTO OrderDetails
         (OrderDetailID, OrderID, ProductName, Quantity)
